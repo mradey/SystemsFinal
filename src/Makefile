@@ -1,3 +1,3 @@
 all:
-	gcc -o wrt writer.c 
-	gcc -o rd reader.c
+	gcc -o cli client.c 
+	gcc -o serv server.c

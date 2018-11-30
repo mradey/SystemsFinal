@@ -66,7 +66,7 @@ void file_close(struct file *file)
 static int __init lkm_message_init(void)
 {
 	// print to the kernel space that the module loaded and the path given	
-	printk(KERN_INFO "Module loaded\n");
+	printk(KERN_INFO "Kernel module has been loaded\n");
 	printk(KERN_INFO "Path of client: %s\n", path);
 
 	// pointer to the file to be read
@@ -80,9 +80,12 @@ static int __init lkm_message_init(void)
 		// create buffer 		
 		char buf[100];
 		// read the messages from the file
-		file_read(f, 0, buf, 100);
-		// print out the information read from the file
+		file_read(f, 0, buf, 20);
 		printk(KERN_INFO "Client: %s\n", buf);
+	}
+	else
+	{
+		printk(KERN_INFO "Unable to open path to client");
 	}
 	//close the file
 	file_close(f);

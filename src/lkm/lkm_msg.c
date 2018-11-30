@@ -21,29 +21,29 @@ MODULE_PARM_DESC(path, "The path of the proc file for the output of the client f
 
 
 /* modified from stack overflow: https://stackoverflow.com/questions/1184274/read-write-files-within-a-linux-kernel-module */
-struct file *file_open(const char *path, int flags, int rights) 
+struct file *file_open(const char *path, int flags, int permissions) 
 {
     // temporary pointer to be returned
     struct file *filp = NULL;
     mm_segment_t fs;
     // error code
-    int err = 0;
+    int error = 0;
 
     fs = get_fs();
     set_fs(get_ds());
 
     // actually open the file itself
-    filp = filp_open(path, flags, rights);
+    filp = filp_open(path, flags, permissions);
     set_fs(fs);
     // make sure there is no error with the file pointer returned
     if (IS_ERR(filp)) {
-        err = PTR_ERR(filp);
+        error = PTR_ERR(filp);
         return NULL;
     }
     return filp;
 }
 
-int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size) 
+int file_read(struct file *file, unsigned long offset, unsigned char *data, unsigned int size) 
 {
     mm_segment_t fs;
     int ret;

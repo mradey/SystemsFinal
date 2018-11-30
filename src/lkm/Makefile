@@ -1,4 +1,4 @@
-TARGET	= lkm_message
+TARGET	= lkm_msg
 
 obj-m	+= $(TARGET).o
 

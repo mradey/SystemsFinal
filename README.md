@@ -13,7 +13,7 @@ Terminal 2
 
 Compile the kernel module with make
 
-load the module with sudo insmod lkm_msg.ko path="/proc/<pid>/fd/0" where pid is the pid of the client printed to the screen. 
+load the module with sudo insmod lkm_msg.ko path="/proc/pid/fd/0" where pid is the pid of the client printed to the screen. 
 
 After running the command if it does not exit automatically, hit CTRL+C and enter the command DMESG to view the kernel 
 space printing of the message. 

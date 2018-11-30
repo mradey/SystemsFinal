@@ -7,6 +7,10 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 
+#define REDTEXT  "\x1B[31m"
+#define BLUETEXT  "\x1B[34m"
+#define GREENTEXT  "\x1B[32m"
+
 void error(const char *msg)
 {
     perror(msg);
@@ -42,8 +46,8 @@ int main(int argc, char *argv[])
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
         error("ERROR connecting");
     printf("The Client PID is %d\n", getpid());
-    printf("The Client proc directory is "/proc/%d/fd/0\n", getpid());
-    printf("Client: ");
+    printf("The Client proc directory is /proc/%d/fd/0\n", getpid());
+    printf("%sClient: ", BLUETEXT);
     while(1)
     {
         bzero(buffer,256);
@@ -55,10 +59,14 @@ int main(int argc, char *argv[])
         n = read(sockfd,buffer,255);
         if (n < 0) 
              error("ERROR reading from socket");
-        printf("Server : %s\n",buffer);
-        int i = strncmp("Bye" , buffer , 3);
-        if(i == 0)
-               break;
+	if (buffer[0]=='\0'|| strncmp("Bye" , buffer , 3)==0)
+	{
+		break;
+	}
+	else
+	{
+        	printf("%sServer: %s%s", REDTEXT, buffer, BLUETEXT);
+	}
     }
     close(sockfd);
     return 0;

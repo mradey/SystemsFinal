@@ -7,6 +7,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+
+#define REDTEXT  "\x1B[31m"
+#define BLUETEXT  "\x1B[34m"
+#define GREENTEXT  "\x1B[32m"
+
 void error(const char *message){
   //output error received
   perror(message);
@@ -71,7 +76,16 @@ int main(int argc, char *argv[])
            if (n < 0) error("ERROR reading from socket");
 
 	   //display client message
-           printf("Client: %s\n",buffer);
+		if (buffer[0]=='\0'|| strncmp("Bye" , buffer , 3)==0)
+		{
+			n = write(newsockfd,"\0",1);
+			sleep(1);
+			break;
+		}
+		else
+		{
+           		printf("%sClient: %s%s",BLUETEXT, buffer, REDTEXT);
+		}
 
 	   //clear all buffer
            bzero(buffer,256);
@@ -82,10 +96,6 @@ int main(int argc, char *argv[])
 
            if (n < 0) error("ERROR writing to socket");
 
-	   //write Bye to end connection
-           int i=strncmp("Bye" , buffer, 3);
-           if(i == 0)
-               break;
      }
      //Close sockets
      close(newsockfd);

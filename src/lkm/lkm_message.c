@@ -1,42 +1,41 @@
 // includes for kernel modules
+#include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/proc_fs.h>
-#include <linux/string.h>
-// for stack overflow included code below
-#include <linux/fs.h>
-#include <asm/segment.h>
-#include <linux/buffer_head.h>
+#include <linux/syscalls.h>
+#include <linux/fcntl.h>
+#include <asm/uaccess.h>
 
-MODULE_LICENSE("");
-MODULE_AUTHOR("");
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Michael, Kelly, Michael");
 MODULE_DESCRIPTION("IPC Kernel Module");
 MODULE_VERSION("0.1");
 
-
-static char *pid = ""; 
+// pass in a path /proc/<pid>/fd/0 where <pid> is the pid printed out by the client
+// this proc directory is where the output of the client is saved
+static char *path = ""; 
 
 // can now do insmod lkm_message.ko pid=X to pass command line argument
-module_param(pid, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-MODULE_PARM_DESC(pid, "The pid number of the client for the messaging");
-
-// the output from the client can be spied on at /proc/client_pid/fd/1
-// the 1 stands for the stdout where the messages print to 
-// need to use the open syscall to read in from that proc file location 
+module_param(path, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+MODULE_PARM_DESC(path, "The path of the proc file for the output of the client for the messaging");
 
 
-/* source of code from stackoverflow https://stackoverflow.com/questions/1184274/read-write-files-within-a-linux-kernel-module/1184346#1184346 */
+/* modified from stack overflow: https://stackoverflow.com/questions/1184274/read-write-files-within-a-linux-kernel-module */
 struct file *file_open(const char *path, int flags, int rights) 
 {
+    // temporary pointer to be returned
     struct file *filp = NULL;
-    mm_segment_t oldfs;
+    mm_segment_t fs;
+    // error code
     int err = 0;
 
-    oldfs = get_fs();
+    fs = get_fs();
     set_fs(get_ds());
+
+    // actually open the file itself
     filp = filp_open(path, flags, rights);
-    set_fs(oldfs);
+    set_fs(fs);
+    // make sure there is no error with the file pointer returned
     if (IS_ERR(filp)) {
         err = PTR_ERR(filp);
         return NULL;
@@ -44,49 +43,55 @@ struct file *file_open(const char *path, int flags, int rights)
     return filp;
 }
 
+int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size) 
+{
+    mm_segment_t fs;
+    int ret;
+
+    fs = get_fs();
+    set_fs(get_ds());
+    
+    // actually does the reading of the file since sys_read doesnt work in kernel
+    ret = vfs_read(file, data, size, &offset);
+
+    set_fs(fs);
+    return ret;
+} 
+
 void file_close(struct file *file) 
 {
     filp_close(file, NULL);
 }
 
-int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size) 
+static int __init lkm_message_init(void)
 {
-    mm_segment_t oldfs;
-    int ret;
+	// print to the kernel space that the module loaded and the path given	
+	printk(KERN_INFO "Module loaded\n");
+	printk(KERN_INFO "Path of client: %s\n", path);
 
-    oldfs = get_fs();
-    set_fs(get_ds());
-
-    ret = vfs_read(file, data, size, &offset);
-
-    set_fs(oldfs);
-    return ret;
-}  
-
-static int __init lkm_message_init(void) {
-	char path[50];
-	char data[100];
+	// pointer to the file to be read
 	struct file *f;
+	// open the file with read only permission and no extra flags
+	f = file_open(path, O_RDONLY, 0);
 
-	char* path_start = "/proc/";
-	char* path_end = "/fd/1/";
-	strcat(path, path_start);
-	strcat(path, pid);  
-	strcat(path, path_end);
-	
-	// parameters may need adjusted here
-	f = file_open(path, 0, 0);
-	
-	file_read(f, 0, data, 100);
-	
+	// make sure the file actually opened
+	if(f!= NULL)
+	{
+		// create buffer 		
+		char buf[100];
+		// read the messages from the file
+		file_read(f, 0, buf, 100);
+		// print out the information read from the file
+		printk(KERN_INFO "Client: %s\n", buf);
+	}
+	//close the file
 	file_close(f);
-	return 0;
+  	return 0;
 }
 
 static void __exit lkm_message_exit(void) {
-	
+	printk(KERN_INFO "Module unloaded\n");
 }
-
 
 module_init(lkm_message_init);
 module_exit(lkm_message_exit);

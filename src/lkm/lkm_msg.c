@@ -15,7 +15,7 @@ MODULE_VERSION("0.1");
 // this proc directory is where the output of the client is saved
 static char *path = ""; 
 
-// can now do insmod lkm_message.ko pid=X to pass command line argument
+// can now do insmod lkm_msg.ko path=X to pass command line argument
 module_param(path, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(path, "The path of the proc file for the output of the client for the messaging");
 
@@ -67,8 +67,15 @@ static int __init lkm_message_init(void)
 {
 	// print to the kernel space that the module loaded and the path given	
 	printk(KERN_INFO "Kernel module has been loaded\n");
+	// no path has been passed in 
+	if(strcmp(path,"") == 0)
+	{
+		printk(KERN_INFO "No file path passed in to open path to client");
+		return 0; 
+	}
+	// print the proper path now that it exists	
 	printk(KERN_INFO "Path of client: %s\n", path);
-
+	
 	// pointer to the file to be read
 	struct file *f;
 	// open the file with read only permission and no extra flags
@@ -80,7 +87,8 @@ static int __init lkm_message_init(void)
 		// create buffer 		
 		char buf[100];
 		// read the messages from the file
-		file_read(f, 0, buf, 20);
+		file_read(f, 0, buf, 100);
+		// print out the buffer to the kernel
 		printk(KERN_INFO "Client: %s\n", buf);
 	}
 	else

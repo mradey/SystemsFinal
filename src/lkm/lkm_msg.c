@@ -6,26 +6,30 @@
 #include <linux/fcntl.h>
 #include <asm/uaccess.h>
 
-// externall information about the module
+// external information about the module
+// GPL is the generic open license
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Michael, Kelly, Michael");
 MODULE_DESCRIPTION("IPC Kernel Module");
-MODULE_VERSION("0.1");
+// version is unimportant to the module itself
+MODULE_VERSION("1.0");
 
 // pass in a path /proc/<pid>/fd/0 where <pid> is the pid printed out by the client
 // this proc directory is where the output of the client is saved
 static char *path = ""; 
 
 // can now do insmod lkm_msg.ko path=X to pass command line argument
+// module_param creates the ability to pass cla, path is the name, charp stands for char pointer, and the macros as the permissions
 module_param(path, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(path, "The path of the proc file for the output of the client for the messaging");
 
-
+// function to replace sys_open
 /* modified from stack overflow: https://stackoverflow.com/questions/1184274/read-write-files-within-a-linux-kernel-module */
 struct file *file_open(const char *path, int flags, int permissions) 
 {
     // temporary pointer to be returned
     struct file *filp = NULL;
+    // fs is way to access fs segment register	
     mm_segment_t fs;
     // error code
     int error = 0;
@@ -46,10 +50,11 @@ struct file *file_open(const char *path, int flags, int permissions)
     // once the file pointer is created, return it
     return filp;
 }
-
+// function to replace sys_read
 int file_read(struct file *file, unsigned long offset, unsigned char *data, unsigned int size) 
 {
     mm_segment_t fs;
+    // return value of if the file is read properly	
     int ret;
 
     // set the x86 processor's FS segment register
@@ -62,13 +67,13 @@ int file_read(struct file *file, unsigned long offset, unsigned char *data, unsi
     set_fs(fs);
     return ret;
 } 
-
+// function to replace sys_close
 void file_close(struct file *file) 
 {
 	// close the file pointer and set the value to null
 	filp_close(file, NULL);
 }
-
+// the function that runs upon startup of the module
 static int __init lkm_message_init(void)
 {
 	// print to the kernel space that the module loaded and the path given	
@@ -100,17 +105,18 @@ static int __init lkm_message_init(void)
 	}
 	else
 	{
+		// file didnt open, let the user know that the path was bad
 		printk(KERN_INFO "Unable to open path to client");
 	}
 	//close the file
 	file_close(f);
   	return 0;
 }
-
+// function that runs upon unloading of the module
 static void __exit lkm_message_exit(void) {
 	// let the user know that the module has finished unloading
 	printk(KERN_INFO "Module unloaded\n");
 }
-
+// maps the above functions to the loading and unloading of the module itself
 module_init(lkm_message_init);
 module_exit(lkm_message_exit);

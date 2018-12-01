@@ -20,6 +20,32 @@ void error(const char *message){
   exit(1);
 }
 
+//get random joke from jokes.txt
+void getJoke(char **joke) {
+     //file pointer for text file
+     FILE *jokefile;
+
+     // get random number to read
+     int i;
+     int r = rand()%15;
+     //open file to get random joke
+     if ( (jokefile = fopen("jokes.txt", "r"))==NULL) 
+     {
+     		*joke="I don't feel like telling a joke right now";
+     }
+     else
+     {
+		//read file a random number of times
+		for (i=0; i<r; i++)
+		{
+			fgets(*joke, 256, jokefile);
+		}
+     }
+
+     //close joke file
+     fclose(jokefile);
+}
+
 //2 parameters: filename and port number
 int main(int argc, char *argv[])
 {
@@ -36,6 +62,9 @@ int main(int argc, char *argv[])
      
      //check if function successful
      int n;
+
+     //initialize jokes
+     char *joke;
 
      //message buffer and internet address for connection
      socklen_t clilen;
@@ -88,21 +117,34 @@ int main(int argc, char *argv[])
 			n = write(newsockfd,"\0",1);
 			// sleep is used to allow the transmission of the messages properly
 			sleep(1);
-			break;
+		     close(newsockfd);
+		     close(sockfd);
+		     return 0; 
 		}
-		else
-		{
+		else if (strncmp("Tell me a joke" , buffer , 3)==0)
+	   	   {
+			getJoke(&joke);
+
 			// print out the message coming from the client
-           		printf("%sClient: %s%s",BLUETEXT, buffer, REDTEXT);
-		}
+		   	printf("%sClient: %s%s%s",BLUETEXT, buffer, REDTEXT, joke);
 
-	   //clear all buffer
-           bzero(buffer,256);
-	   // get the information from stdin and copy it to the message buffer
-           fgets(buffer,255,stdin);
+			//clear all buffer
+		        bzero(buffer,256);
+			strcpy(buffer,joke);
 
-	   //Let server write back
-           n = write(newsockfd,buffer,strlen(buffer));
+			n = write(newsockfd,buffer,strlen(joke));	
+		   } else {
+			// print out the message coming from the client
+		   	printf("%sClient: %s%s",BLUETEXT, buffer, REDTEXT);
+
+			//clear all buffer
+		        bzero(buffer,256);
+			// get the information from stdin and copy it to the message buffer
+			fgets(buffer,255,stdin);
+
+			 //Let server write back
+			 n = write(newsockfd,buffer,strlen(buffer));
+		   }
 
            if (n < 0) error("ERROR writing to socket");
 

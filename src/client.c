@@ -14,10 +14,13 @@
 
 void error(const char *msg)
 {
+    // output error message if one exists
     perror(msg);
+    // exit with error code 0 to user
     exit(0);
 }
 
+// 2 command line agruments: ip of server and port number
 int main(int argc, char *argv[])
 {
     int sockfd, portno, n;

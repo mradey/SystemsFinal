@@ -20,30 +20,41 @@ void error(const char *message){
   exit(1);
 }
 
-//get random joke from jokes.txt
+//get random joke from jokes array
 void getJoke(char **joke) {
-     //file pointer for text file
-     FILE *jokefile;
+     // initialize the array of the jokes
+    const char *jokes[16];
+	jokes[1] = "How do you throw a space party? You planet.";
+	jokes[2] = "How was Rome split in two? With a pair of Ceasars.";
+	jokes[3] = "A Buddhist walks up to a hot dog stand and says Make me one with everything.";
+	jokes[4] = "What does a clock do when it's hungry? It goes back for seconds.";
+	jokes[5] = "Towels can’t tell jokes. They have a dry sense of humor.";
+	jokes[6] = "To write with a broken pencil is pointless.";
+	jokes[7] = "I read a book on anti-gravity. I couldn’t put it down.";
+	jokes[8] = "How does Moses make coffee? Hebrews it.";
+	jokes[9] = "What did the buffalo say to his son? Bison.";
+	jokes[10] = "Why shouldn’t you trust atoms? They make up everything.";
+	jokes[11] = "What do you call a bear with no teeth? A gummy bear.";
+	jokes[12] = "What do you call a fake noodle? An impasta.";
+	jokes[13] = "What do you call a spanish pig? Porque.";
+	jokes[14] = "What do you call a line of rabbits marching backwards? A receding hairline.";
+	jokes[15] = "How do trees access the internet? They log on.";
 
      // get random number to read
      int i;
-     int r = rand()%15;
+     int r = rand()%16;
      //open file to get random joke
-     if ( (jokefile = fopen("jokes.txt", "r"))==NULL) 
+     // if they are unlucky and get 0
+     if (r==0) 
      {
+	     	// give the default joke answer
      		*joke="I don't feel like telling a joke right now";
      }
      else
      {
-		//read file a random number of times
-		for (i=0; i<r; i++)
-		{
-			fgets(*joke, 256, jokefile);
-		}
+	     	// give them a random joke
+		*joke = jokes[r]; 
      }
-
-     //close joke file
-     fclose(jokefile);
 }
 
 //2 parameters: filename and port number
@@ -133,7 +144,8 @@ int main(int argc, char *argv[])
 			strcpy(buffer,joke);
 
 			n = write(newsockfd,buffer,strlen(joke));	
-		   } else {
+		   } 
+		else {
 			// print out the message coming from the client
 		   	printf("%sClient: %s%s",BLUETEXT, buffer, REDTEXT);
 
@@ -154,3 +166,4 @@ int main(int argc, char *argv[])
      close(sockfd);
      return 0; 
 }
+

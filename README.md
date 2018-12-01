@@ -1,5 +1,6 @@
 # Systems Final
-A program that uses interprocess communication message passing
+A program that uses interprocess communication message passing created by Michael Radey, Kelly Wu, and Michael Bragalone in 
+Dr. Zhang's Systems 2431 class
 
 Compile with make
 
